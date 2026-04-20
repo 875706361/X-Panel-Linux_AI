@@ -1,0 +1,192 @@
+{{ define "page/head_start" }}
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="renderer" content="webkit">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="robots" content="noindex,nofollow">
+<link rel="stylesheet" href="{{ .base_path }}assets/ant-design-vue/antd.min.css">
+<link rel="stylesheet" href="{{ .base_path }}assets/css/custom.min.css?{{ .cur_ver }}">
+<style>
+[v-cloak] { display: none; }
+/* 移动端下拉刷新样式 */
+.pull-to-refresh-container {
+position: relative;
+overflow: hidden;
+}
+.pull-to-refresh-indicator {
+position: absolute;
+top: -60px;
+left: 0;
+right: 0;
+height: 60px;
+display: flex;
+align-items: center;
+justify-content: center;
+opacity: 0;
+transition: opacity 0.3s ease, transform 0.3s ease;
+pointer-events: none;
+z-index: 1000;
+}
+.pull-to-refresh-indicator.visible {
+opacity: 1;
+}
+.pull-to-refresh-indicator.pulling {
+transform: translateY(60px);
+}
+.pull-to-refresh-indicator.refreshing {
+transform: translateY(60px);
+}
+.pull-to-refresh-spinner {
+width: 24px;
+height: 24px;
+border: 2px solid #1890ff;
+border-top-color: transparent;
+border-radius: 50%;
+animation: pull-to-refresh-spin 0.8s linear infinite;
+}
+@keyframes pull-to-refresh-spin {
+to { transform: rotate(360deg); }
+}
+.pull-to-refresh-text {
+margin-left: 10px;
+color: #666;
+font-size: 14px;
+}
+/* 暗色主题适配 */
+.dark .pull-to-refresh-indicator .pull-to-refresh-text {
+color: #aaa;
+}
+/* vazirmatn-regular - arabic_latin_latin-ext */
+@font-face {
+font-display: swap;
+font-family: 'Vazirmatn';
+font-style: normal;
+font-weight: 400;
+src: url('{{ .base_path }}assets/Vazirmatn-UI-NL-Regular.woff2') format('woff2');
+unicode-range: U+0600-06FF, U+200C-200E, U+2010-2011, U+204F, U+2E41, U+FB50-FDFF, U+FE80-FEFC, U+0030-0039;
+}
+body {
+font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Vazirmatn', 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+}
+</style>
+<title>{{ .host }} – {{ i18n .title}}</title>
+{{ end }}
+
+{{ define "page/head_end" }}
+</head>
+{{ end }}
+
+{{ define "page/body_start" }}
+<body>
+<div id="message"></div>
+{{ end }}
+
+{{ define "page/body_scripts" }}
+<script src="{{ .base_path }}assets/vue/vue.min.js?{{ .cur_ver }}"></script>
+<script src="{{ .base_path }}assets/moment/moment.min.js"></script>
+<script src="{{ .base_path }}assets/ant-design-vue/antd.min.js"></script>
+<script src="{{ .base_path }}assets/axios/axios.min.js?{{ .cur_ver }}"></script>
+<script src="{{ .base_path }}assets/qs/qs.min.js"></script>
+<script src="{{ .base_path }}assets/js/axios-init.js?{{ .cur_ver }}"></script>
+<script src="{{ .base_path }}assets/js/util/date-util.js?{{ .cur_ver }}"></script>
+<script src="{{ .base_path }}assets/js/util/index.js?{{ .cur_ver }}"></script>
+<script>
+const basePath = '{{ .base_path }}';
+axios.defaults.baseURL = basePath;
+</script>
+<!-- 移动端下拉刷新功能 -->
+<script>
+// 下拉刷新功能 - 仅在移动端启用
+(function() {
+const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth <= 768;
+if (!isMobile) return;
+
+let startY = 0;
+let currentY = 0;
+let isPulling = false;
+let isRefreshing = false;
+const triggerDistance = 60;
+let pullIndicator = null;
+
+function createPullIndicator() {
+const div = document.createElement('div');
+div.className = 'pull-to-refresh-indicator';
+div.innerHTML = '<div class="pull-to-refresh-spinner"></div><span class="pull-to-refresh-text">下拉刷新</span>';
+document.body.insertBefore(div, document.body.firstChild);
+return div;
+}
+
+function updatePullIndicator(distance, state) {
+if (!pullIndicator) pullIndicator = createPullIndicator();
+if (distance > 0) {
+pullIndicator.classList.add('visible');
+const translate = Math.min(distance * 0.5, triggerDistance);
+pullIndicator.style.transform = `translateY(${translate}px)`;
+if (state === 'release') {
+pullIndicator.querySelector('.pull-to-refresh-text').textContent = '松开刷新';
+} else {
+pullIndicator.querySelector('.pull-to-refresh-text').textContent = '下拉刷新';
+}
+} else {
+pullIndicator.classList.remove('visible');
+}
+}
+
+function doRefresh() {
+if (isRefreshing || !pullIndicator) return;
+isRefreshing = true;
+pullIndicator.querySelector('.pull-to-refresh-text').textContent = '正在刷新...';
+pullIndicator.style.transform = `translateY(${triggerDistance}px)`;
+
+// 延迟刷新，让用户看到提示
+setTimeout(() => {
+location.reload();
+}, 500);
+}
+
+// 触摸开始
+document.addEventListener('touchstart', function(e) {
+if (window.scrollY > 0 || isRefreshing) return;
+startY = e.touches[0].clientY;
+isPulling = true;
+}, { passive: true });
+
+// 触摸移动
+document.addEventListener('touchmove', function(e) {
+if (!isPulling || window.scrollY > 0) return;
+currentY = e.touches[0].clientY;
+const diff = currentY - startY;
+if (diff > 0 && diff < 150) {
+e.preventDefault();
+const state = diff > triggerDistance ? 'release' : 'pulling';
+updatePullIndicator(diff, state);
+}
+}, { passive: false });
+
+// 触摸结束
+document.addEventListener('touchend', function() {
+if (!isPulling || !pullIndicator) {
+isPulling = false;
+return;
+}
+const diff = currentY - startY;
+if (diff > triggerDistance) {
+doRefresh();
+} else {
+pullIndicator.classList.remove('visible');
+pullIndicator.style.transform = 'translateY(0)';
+}
+isPulling = false;
+startY = 0;
+currentY = 0;
+});
+})();
+</script>
+{{ end }}
+ 
+{{ define "page/body_end" }}
+</body>
+</html>
+{{ end }}
