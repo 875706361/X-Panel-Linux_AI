@@ -403,15 +403,14 @@
                         show-icon closable>
                     </a-alert>
                 </transition>
-                <transition name="list" appear>
-                    <template>
-                        <a-row v-if="!loadingStates.fetched">
-                            <a-card
-                                :style="{ textAlign: 'center', padding: '30px 0', marginTop: '10px', background: 'transparent', border: 'none' }">
-                                <a-spin tip='{{ i18n "loading" }}'></a-spin>
-                            </a-card>
-                        </a-row>
-                        <a-row v-else class="main-content-row">
+ <transition name="list" appear>
+ <a-row v-if="!loadingStates.fetched">
+ <a-card
+ :style="{ textAlign: 'center', padding: '30px 0', marginTop: '10px', background: 'transparent', border: 'none' }">
+ <a-spin tip='{{ i18n "loading" }}'></a-spin>
+ </a-card>
+ </a-row>
+ <a-row v-else class="main-content-row">
                             <a-row :gutter="[isMobile ? 8 : 16, isMobile ? 8 : 16]" :style="{ flex: '1 1 100%' }">
 
                                 <a-col :sm="24" :lg="16">
@@ -1097,26 +1096,32 @@ ${dateTime}
     };
 
     const app = new Vue({
-        delimiters: ['[[', ']]'],
-        el: '#app',
-        mixins: [MediaQueryMixin],
-        data: {
-            themeSwitcher,
-            loadingStates: {
-                fetched: false,
+ delimiters: ['[[', ']]'],
+ el: '#app',
+ mixins: [MediaQueryMixin],
+ data: {
+ themeSwitcher,
+ loadingStates: {
+ fetched: false,
  spinning: false
  },
 
  status: new Status(),
-            versionModal,
-            logModal,
-            xraylogModal,
-            backupModal,
-            loadingTip: '{{ i18n "loading"}}',
-            showAlert: false,
-            showIp: false,
-            ipLimitEnable: false,
-        },
+ versionModal,
+ logModal,
+ xraylogModal,
+ backupModal,
+ loadingTip: '{{ i18n "loading"}}',
+ showAlert: false,
+ showIp: false,
+ ipLimitEnable: false,
+ },
+
+ created() {
+ // 页面初始化立即显示，后续加载状态用 spinning 控制
+ console.log('Page created, setting fetched=true');
+ this.loadingStates.fetched = true;
+ },
         methods: {
             loading(spinning, tip = '{{ i18n "loading"}}') {
                 this.loadingStates.spinning = spinning;
