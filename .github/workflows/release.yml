@@ -50,37 +50,43 @@ jobs:
           go-version-file: go.mod
           check-latest: true
 
-      - name: Build X-Panel for Linux
-        run: |
-          export CGO_ENABLED=1
-          export GOOS=linux
-          export GOARCH=${{ matrix.platform }}
-          # Use Bootlin prebuilt cross-toolchains (musl 1.2.5 in stable series)
-          case "${{ matrix.platform }}" in
-            amd64) BOOTLIN_ARCH="x86-64" ;;
-            arm64) BOOTLIN_ARCH="aarch64" ;;
-            armv7) BOOTLIN_ARCH="armv7-eabihf"; export GOARCH=arm GOARM=7 ;;
-            armv6) BOOTLIN_ARCH="armv6-eabihf"; export GOARCH=arm GOARM=6 ;;
-            armv5) BOOTLIN_ARCH="armv5-eabi"; export GOARCH=arm GOARM=5 ;;
-            386) BOOTLIN_ARCH="x86-i686" ;;
-            s390x) BOOTLIN_ARCH="s390x-z13" ;;
-          esac
-          echo "Resolving Bootlin musl toolchain for arch=$BOOTLIN_ARCH (platform=${{ matrix.platform }})"
-          TARBALL_BASE="https://toolchains.bootlin.com/downloads/releases/toolchains/$BOOTLIN_ARCH/tarballs/"
-          TARBALL_URL=$(curl -fsSL "$TARBALL_BASE" | grep -oE "${BOOTLIN_ARCH}--musl--stable-[^\"]+\\.tar\\.xz" | sort -r | head -n1)
-          [ -z "$TARBALL_URL" ] && { echo "Failed to locate Bootlin musl toolchain for arch=$BOOTLIN_ARCH" >&2; exit 1; }
-          echo "Downloading: $TARBALL_URL"
-          cd /tmp
-          curl -fL -sS -o "$(basename "$TARBALL_URL")" "$TARBALL_BASE/$TARBALL_URL"
-          tar -xf "$(basename "$TARBALL_URL")"
-          TOOLCHAIN_DIR=$(find . -maxdepth 1 -type d -name "${BOOTLIN_ARCH}--musl--stable-*" | head -n1)
-          export PATH="$(realpath "$TOOLCHAIN_DIR")/bin:$PATH"
-          export CC=$(realpath "$(find "$TOOLCHAIN_DIR/bin" -name '*-gcc.br_real' -type f -executable | head -n1)")
-          [ -z "$CC" ] && { echo "No gcc.br_real found in $TOOLCHAIN_DIR/bin" >&2; exit 1; }
-          cd -
-          go build -ldflags "-w -s -linkmode external -extldflags '-static'" -o xui-release -v main.go
-          file xui-release
-          ldd xui-release || echo "Static binary confirmed"
+ - name: Build X-Panel for Linux
+ run: |
+ export CGO_ENABLED=1
+ export GOOS=linux
+ export GOARCH=${{ matrix.platform }}
+ # Use Bootlin prebuilt cross-toolchains (musl 1.2.5 in stable series)
+ case "${{ matrix.platform }}" in
+ amd64) BOOTLIN_ARCH="x86-64" ;;
+ arm64) BOOTLIN_ARCH="aarch64" ;;
+ armv7) BOOTLIN_ARCH="armv7-eabihf"; export GOARCH=arm GOARM=7 ;;
+ armv6) BOOTLIN_ARCH="armv6-eabihf"; export GOARCH=arm GOARM=6 ;;
+ armv5) BOOTLIN_ARCH="armv5-eabi"; export GOARCH=arm GOARM=5 ;;
+ 386) BOOTLIN_ARCH="x86-i686" ;;
+ s390x) BOOTLIN_ARCH="s390x-z13" ;;
+ esac
+ echo "Resolving Bootlin musl toolchain for arch=$BOOTLIN_ARCH (platform=${{ matrix.platform }})"
+ TARBALL_BASE="https://toolchains.bootlin.com/downloads/releases/toolchains/$BOOTLIN_ARCH/tarballs/"
+ # Try multiple times to find the URL
+ TARBALL_URL=$(curl -fsSL --retry 3 --max-time 30 "$TARBALL_BASE" 2>/dev/null | grep -oE "${BOOTLIN_ARCH}--musl--stable-[^\"]+\\.tar\\.xz" | sort -r | head -n1)
+ if [ -z "$TARBALL_URL" ]; then
+ echo "⚠️ Bootlin unreachable for $BOOTLIN_ARCH. Falling back to native build with disable CGO."
+ export CGO_ENABLED=0
+ go build -ldflags "-w -s" -o xui-release -v main.go
+ else
+ echo "Downloading: $TARBALL_URL"
+ cd /tmp
+ curl -fL --retry 3 -sS -o "$(basename "$TARBALL_URL")" "$TARBALL_BASE/$TARBALL_URL"
+ tar -xf "$(basename "$TARBALL_URL")"
+ TOOLCHAIN_DIR=$(find . -maxdepth 1 -type d -name "${BOOTLIN_ARCH}--musl--stable-*" | head -n1)
+ export PATH="$(realpath "$TOOLCHAIN_DIR")/bin:$PATH"
+ export CC=$(realpath "$(find "$TOOLCHAIN_DIR/bin" -name '*-gcc.br_real' -type f -executable | head -n1)")
+ [ -z "$CC" ] && { echo "No gcc.br_real found in $TOOLCHAIN_DIR/bin" >&2; exit 1; }
+ cd -
+ go build -ldflags "-w -s -linkmode external -extldflags '-static'" -o xui-release -v main.go
+ fi
+ file xui-release
+ ldd xui-release || echo "Static binary confirmed"
           
           mkdir x-ui
           cp xui-release x-ui/
