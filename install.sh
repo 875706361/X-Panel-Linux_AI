@@ -208,7 +208,16 @@ if [[ -n "$is_private" ]]; then
             last_version=$(echo "$release_json" | grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/')
             
 if [[ ! -n "$last_version" ]]; then
-        echo -e "${red}获取 X-Panel 版本失败，请检查网络连接${plain}"
+        # Check if API returned error message
+        if echo "$release_json" | grep -q "Not Found"; then
+            echo -e "${red}获取 X-Panel 版本失败：仓库没有发布任何 Releases${plain}"
+            echo -e "${yellow}请访问 https://github.com/875706361/X-Panel-Linux_AI/releases 检查${plain}"
+        elif echo "$release_json" | grep -q "API rate limit"; then
+            echo -e "${red}获取 X-Panel 版本失败：GitHub API 速率限制${plain}"
+            echo -e "${yellow}请稍后重试或使用 GITHUB_TOKEN 认证${plain}"
+        else
+            echo -e "${red}获取 X-Panel 版本失败，请检查网络连接${plain}"
+        fi
         exit 1
     fi
             echo ""
