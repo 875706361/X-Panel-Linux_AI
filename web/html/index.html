@@ -1122,20 +1122,21 @@ ${dateTime}
                 this.loadingStates.spinning = spinning;
                 this.loadingTip = tip;
             },
-            async getStatus() {
-                try {
-                    const msg = await HttpUtil.get('/panel/api/server/status');
-                    if (msg.success) {
-                        if (!this.loadingStates.fetched) {
-                            this.loadingStates.fetched = true;
-                        }
-
-                        this.setStatus(msg.obj, true);
-                    }
-                } catch (e) {
-                    console.error("Failed to get status:", e);
-                }
-            },
+ async getStatus() {
+ try {
+ const msg = await HttpUtil.get('/panel/api/server/status');
+ if (msg.success) {
+ this.setStatus(msg.obj, true);
+ }
+ } catch (e) {
+ console.error("Failed to get status:", e);
+ } finally {
+ // 确保无论成功失败，都显示内容
+ if (!this.loadingStates.fetched) {
+ this.loadingStates.fetched = true;
+ }
+ }
+ },
             setStatus(data) {
                 this.status = new Status(data);
             },

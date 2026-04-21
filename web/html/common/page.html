@@ -107,7 +107,7 @@ let startY = 0;
 let currentY = 0;
 let isPulling = false;
 let isRefreshing = false;
-const triggerDistance = 60;
+const triggerDistance = 100; // 触发阈值从60增加到100
 let pullIndicator = null;
 
 function createPullIndicator() {
@@ -122,7 +122,8 @@ function updatePullIndicator(distance, state) {
 if (!pullIndicator) pullIndicator = createPullIndicator();
 if (distance > 0) {
 pullIndicator.classList.add('visible');
-const translate = Math.min(distance * 0.5, triggerDistance);
+// 增加阻尼系数，从0.5改为0.4，让下拉更"涩"
+const translate = Math.min(distance * 0.4, triggerDistance);
 pullIndicator.style.transform = `translateY(${translate}px)`;
 if (state === 'release') {
 pullIndicator.querySelector('.pull-to-refresh-text').textContent = '松开刷新';
