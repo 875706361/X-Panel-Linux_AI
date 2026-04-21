@@ -1,27 +1,26 @@
 name: Release X-Panel
 
 on:
-  workflow_dispatch:
-  release:
-    types: [published]
-  push:
-    branches:
-      - main
+ workflow_dispatch:
+ release:
+ types: [published]
+ push:
+ branches:
+ - main
+ tags:
+ - 'v*'
+ paths:
+ - '.github/workflows/release.yml'
+ - '**.js'
+ - '**.css'
+ - '**.html'
+ - '**.sh'
+ - '**.go'
+ - 'go.mod'
+ - 'go.sum'
+ - 'x-ui.service'
 
-    tags:
-      - 'v*'
-    paths:
-      - '.github/workflows/release.yml'
-      - '**.js'
-      - '**.css'
-      - '**.html'
-      - '**.sh'
-      - '**.go'
-      - 'go.mod'
-      - 'go.sum'
-      - 'x-ui.service'
-
- jobs:
+jobs:
  # ===============================================================
  # Linux 平台的构建任务 (这是原有的任务，保持不变)
  # ===============================================================
