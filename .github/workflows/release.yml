@@ -1,45 +1,45 @@
 name: Release X-Panel
 
 on:
- workflow_dispatch:
- release:
- types: [published]
- push:
- branches:
- - main
- tags:
- - 'v*'
- paths:
- - '.github/workflows/release.yml'
- - '**.js'
- - '**.css'
- - '**.html'
- - '**.sh'
- - '**.go'
- - 'go.mod'
- - 'go.sum'
- - 'x-ui.service'
+  workflow_dispatch:
+  release:
+    types: [published]
+  push:
+    branches:
+      - main
+    tags:
+      - 'v*'
+    paths:
+      - '.github/workflows/release.yml'
+      - '**.js'
+      - '**.css'
+      - '**.html'
+      - '**.sh'
+      - '**.go'
+      - 'go.mod'
+      - 'go.sum'
+      - 'x-ui.service'
 
 jobs:
- # ===============================================================
- # Linux 平台的构建任务 (这是原有的任务，保持不变)
- # ===============================================================
- build-linux:
- name: Build for Linux
- permissions:
- contents: write
- timeout-minutes: 60
- strategy:
- matrix:
- platform:
- - amd64
- - arm64
- - armv7
- - armv6
- - 386
- - armv5
- - s390x
- runs-on: ubuntu-latest
+  # ===============================================================
+  # Linux 平台的构建任务 (这是原有的任务，保持不变)
+  # ===============================================================
+  build-linux:
+    name: Build for Linux
+    permissions:
+      contents: write
+    timeout-minutes: 60
+    strategy:
+      matrix:
+        platform:
+          - amd64
+          - arm64
+          - armv7
+          - armv6
+          - '386'
+          - armv5
+          - s390x
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
         uses: actions/checkout@v5
@@ -149,6 +149,4 @@ jobs:
           file: x-ui-linux-${{ matrix.platform }}.tar.gz
           asset_name: x-ui-linux-${{ matrix.platform }}.tar.gz
           # 如果这是预发布版本，可以此行注释
-          prerelease: true  
-
-
+          prerelease: true
