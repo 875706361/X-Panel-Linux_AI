@@ -107,7 +107,8 @@ let startY = 0;
 let currentY = 0;
 let isPulling = false;
 let isRefreshing = false;
-const triggerDistance = 100; // 触发阈值从60增加到100
+const triggerDistance = 150; // 触发阈值从100增加到150，需要更大力下拉
+const maxPullDistance = 250; // 最大下拉距离从150增加到250
 let pullIndicator = null;
 
 function createPullIndicator() {
@@ -154,16 +155,19 @@ startY = e.touches[0].clientY;
 isPulling = true;
 }, { passive: true });
 
-// 触摸移动
+// 触摸移动 - 增加阻尼
 document.addEventListener('touchmove', function(e) {
-if (!isPulling || window.scrollY > 0) return;
-currentY = e.touches[0].clientY;
-const diff = currentY - startY;
-if (diff > 0 && diff < 150) {
-e.preventDefault();
-const state = diff > triggerDistance ? 'release' : 'pulling';
-updatePullIndicator(diff, state);
-}
+ if (!isPulling || window.scrollY > 0) return;
+ currentY = e.touches[0].clientY;
+ const diff = currentY - startY;
+ // 增加阻尼判断：超过maxPullDistance不响应，阻尼系数调低到0.25
+ if (diff > 0 && diff < maxPullDistance) {
+ e.preventDefault();
+ // 增加视觉阻尼，下拉距离越大越"涩"
+ const dampedDiff = diff * 0.25 + (diff > 100 ? (diff - 100) * 0.15 : 0);
+ const state = diff > triggerDistance ? 'release' : 'pulling';
+ updatePullIndicator(dampedDiff, state);
+ }
 }, { passive: false });
 
 // 触摸结束
