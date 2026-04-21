@@ -1301,6 +1301,14 @@ ${dateTime}
  this.ipLimitEnable = msg.obj.ipLimitEnable;
  }
 
+ // 后备：5秒后强制显示内容，防止任何卡住情况
+ setTimeout(() => {
+ if (!this.loadingStates.fetched) {
+ console.log('Force show content after 5s timeout');
+ this.loadingStates.fetched = true;
+ }
+ }, 5000);
+
  while (true) {
  try {
  await this.getStatus();
