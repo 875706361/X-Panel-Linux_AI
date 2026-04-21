@@ -21,25 +21,26 @@ on:
       - 'go.sum'
       - 'x-ui.service'
 
-jobs:
-  # ===============================================================
-  # Linux 平台的构建任务 (这是原有的任务，保持不变)
-  # ===============================================================
-  build-linux:
-    name: Build for Linux
-    permissions:
-      contents: write
-    strategy:
-      matrix:
-        platform:
-          - amd64
-          - arm64
-          - armv7
-          - armv6
-          - 386
-          - armv5
-          - s390x
-    runs-on: ubuntu-latest
+ jobs:
+ # ===============================================================
+ # Linux 平台的构建任务 (这是原有的任务，保持不变)
+ # ===============================================================
+ build-linux:
+ name: Build for Linux
+ permissions:
+ contents: write
+ timeout-minutes: 60
+ strategy:
+ matrix:
+ platform:
+ - amd64
+ - arm64
+ - armv7
+ - armv6
+ - 386
+ - armv5
+ - s390x
+ runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
         uses: actions/checkout@v5
