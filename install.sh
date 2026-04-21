@@ -168,29 +168,49 @@ install_free_version() {
         /usr/local/x-ui/x-ui migrate
     }
 
-    install_x-ui() {
-        cd /usr/local/
+install_x-ui() {
+    cd /usr/local/
 
+    # Check if repository is private
+    repo_info=$(curl -s "https://api.github.com/repos/875706361/X-Panel-Linux_AI")
+    
+    # Check if repo is private (response contains "message": "Not Found" or "private": true)
+    is_private=$(echo "$repo_info" | grep -E '"private": true|Not Found')
+    
+if [[ -n "$is_private" ]]; then
+        echo -e "${yellow}检测到私有仓库，需要GITHUB_TOKEN进行认证${plain}"
         if [[ -z "$GITHUB_TOKEN" ]]; then
-            echo -e "${red}错误: 检测到私有仓库安装，未找到 GITHUB_TOKEN 环境变量。${plain}"
-            echo -e "${yellow}请在运行脚本前设置: export GITHUB_TOKEN=your_token${plain}"
-            exit 1
+            echo -n -e "${yellow}请输入你的GITHUB_TOKEN并回车: ${plain}"
+            read -s GITHUB_TOKEN
+            echo ""
+            if [[ -z "$GITHUB_TOKEN" ]]; then
+                echo -e "${red}错误: TOKEN不能为空${plain}"
+                exit 1
+            fi
         fi
-        
-        # Helper for authenticated API calls
-        api_req() {
+        echo -e "${green}GITHUB_TOKEN已配置，继续安装...${plain}" 
+    else
+        echo -e "${green}检测到公开仓库，无需TOKEN认证${plain}"
+    fi
+
+    # Helper for API calls (add auth header if token exists)
+    api_req() {
+        if [[ -n "$GITHUB_TOKEN" ]]; then
             curl -s -H "Authorization: token $GITHUB_TOKEN" "$@"
-        }
+        else
+            curl -s "$@"
+        fi
+    }
 
         # Download resources
         if [ $# == 0 ]; then
-            release_json=$(api_req "https://api.github.com/repos/875706361/X-Panel-Linux/releases/latest")
+            release_json=$(api_req "https://api.github.com/repos/875706361/X-Panel-Linux_AI/releases/latest")
             last_version=$(echo "$release_json" | grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/')
             
-            if [[ ! -n "$last_version" ]]; then
-                echo -e "${red}获取 X-Panel 版本失败，请检查 GITHUB_TOKEN 是否有效${plain}"
-                exit 1
-            fi
+if [[ ! -n "$last_version" ]]; then
+        echo -e "${red}获取 X-Panel 版本失败，请检查网络连接${plain}"
+        exit 1
+    fi
             echo ""
             echo -e "-----------------------------------------------------"
             echo -e "${green}--------->>获取 X-Panel 最新版本：${yellow}${last_version}${plain}${green}，开始安装...${plain}"
@@ -198,7 +218,7 @@ install_free_version() {
         else
             last_version=$1
             # For specific tag, get that release
-            release_json=$(api_req "https://api.github.com/repos/875706361/X-Panel-Linux/releases/tags/${last_version}")
+            release_json=$(api_req "https://api.github.com/repos/875706361/X-Panel-Linux_AI/releases/tags/${last_version}")
             if [[ $(echo "$release_json" | grep "Not Found") ]]; then
                  echo -e "${red}未找到版本 $1${plain}"
                  exit 1
@@ -231,10 +251,16 @@ install_free_version() {
 
         echo -e "${green}---------------->>>>>>>>>>>>>>>>>>>>>下载资源 ID: ${asset_id}${plain}"
         
-        # Download Asset
+# Download Asset
+    if [[ -n "$GITHUB_TOKEN" ]]; then
         curl -L -H "Authorization: token $GITHUB_TOKEN" -H "Accept: application/octet-stream" \
-             "https://api.github.com/repos/875706361/X-Panel-Linux/releases/assets/$asset_id" \
-             -o "/usr/local/x-ui-linux-${target_arch}.tar.gz"
+            "https://api.github.com/repos/875706361/X-Panel-Linux_AI/releases/assets/$asset_id" \
+            -o "/usr/local/x-ui-linux-${target_arch}.tar.gz"
+    else
+        curl -L -H "Accept: application/octet-stream" \
+            "https://api.github.com/repos/875706361/X-Panel-Linux_AI/releases/assets/$asset_id" \
+            -o "/usr/local/x-ui-linux-${target_arch}.tar.gz"
+    fi
 
         if [[ $? -ne 0 ]]; then
             echo -e "${red}下载 X-Panel 失败${plain}"
@@ -243,7 +269,7 @@ install_free_version() {
 
         # Download x-ui.sh script (using Raw content API)
         api_req -H "Accept: application/vnd.github.v3.raw" \
-            "https://api.github.com/repos/875706361/X-Panel-Linux/contents/x-ui.sh" \
+            "https://api.github.com/repos/875706361/X-Panel-Linux_AI/contents/x-ui.sh" \
             -o /usr/bin/x-ui-temp
 
         # Stop x-ui service and remove old resources
@@ -368,7 +394,7 @@ install_free_version() {
     echo ""
     echo -e "----------------------------------------------"
     echo ""
-    echo -e "${green}〔X-Panel面板〕项目地址：${yellow}https://github.com/875706361/X-Panel-Linux${plain}" 
+    echo -e "${green}〔X-Panel面板〕项目地址：${yellow}https://github.com/875706361/X-Panel-Linux_AI${plain}" 
     echo ""
     echo -e "----------------------------------------------"
     echo ""
