@@ -168,19 +168,17 @@ install_free_version() {
         /usr/local/x-ui/x-ui migrate
     }
 
-    install_x-ui() {
-        cd /usr/local/
-
-        if [[ -z "$GITHUB_TOKEN" ]]; then
-            echo -e "${red}错误: 检测到私有仓库安装，未找到 GITHUB_TOKEN 环境变量。${plain}"
-            echo -e "${yellow}请在运行脚本前设置: export GITHUB_TOKEN=your_token${plain}"
-            exit 1
-        fi
-        
-        # Helper for authenticated API calls
-        api_req() {
-            curl -s -H "Authorization: token $GITHUB_TOKEN" "$@"
-        }
+ install_x-ui() {
+ cd /usr/local/
+ 
+ # Helper for authenticated API calls (optional for public repos)
+ api_req() {
+ if [[ -n "$GITHUB_TOKEN" ]]; then
+ curl -s -H "Authorization: token $GITHUB_TOKEN" "$@"
+ else
+ curl -s "$@"
+ fi
+ }
 
         # Download resources
         if [ $# == 0 ]; then
