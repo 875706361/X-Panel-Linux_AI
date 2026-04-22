@@ -288,16 +288,14 @@ fi
 sleep 3
 echo -e "${green}------->>>>>>>>>>>检查并保存安装目录${plain}"
 echo ""
-# Extract tar.gz and move to correct location
+# Extract tar.gz and cleanup
 rm -rf /usr/local/x-ui 2>/dev/null
 cd /usr/local
 tar zxvf x-ui-linux-${target_arch}.tar.gz
-mv x-ui-package x-ui
 rm x-ui-linux-${target_arch}.tar.gz -f
 
 cd x-ui
-chmod +x x-ui
-chmod +x x-ui.sh
+chmod +x x-ui x-ui.sh
 
 # Check the system's architecture and rename the file accordingly
 if [[ $(arch) == "armv5" || $(arch) == "armv6" || $(arch) == "armv7" ]]; then
@@ -306,8 +304,8 @@ if [[ $(arch) == "armv5" || $(arch) == "armv6" || $(arch) == "armv7" ]]; then
 fi
 chmod +x x-ui bin/xray-linux-${target_arch}
 
-# Update x-ui cli and se set permission
-mv -f /usr/bin/x-ui-temp /usr/bin/x-ui
+# Copy x-ui.sh to system path
+cp -f x-ui.sh /usr/bin/x-ui
 chmod +x /usr/bin/x-ui
         sleep 2
         echo -e "${green}------->>>>>>>>>>>保存成功${plain}"
