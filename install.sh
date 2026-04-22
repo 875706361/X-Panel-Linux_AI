@@ -171,9 +171,33 @@ install_free_version() {
  install_x-ui() {
  cd /usr/local/
  
- # Helper for authenticated API calls (optional for public repos)
+ # Detect if repository is public or private
+ echo -e "${green}正在检测仓库访问权限...${plain}"
+ repo_check=$(curl -s -o /dev/null -w "%{http_code}" "https://api.github.com/repos/875706361/X-Panel-Linux_AI/releases/latest")
+ 
+ if [[ "$repo_check" == "200" ]]; then
+ echo -e "${green}✓ 检测到公开仓库，无需令牌${plain}"
+ USE_TOKEN=false
+ else
+ echo -e "${yellow}检测到私有仓库，需要GITHUB_TOKEN${plain}"
+ USE_TOKEN=true
+ fi
+ 
+ # If private and no token, prompt for input
+ if [[ "$USE_TOKEN" == "true" && -z "$GITHUB_TOKEN" ]]; then
+ echo ""
+ read -p "请输入您的 GITHUB_TOKEN: " GITHUB_TOKEN < /dev/tty
+ echo ""
+ if [[ -z "$GITHUB_TOKEN" ]]; then
+ echo -e "${red}错误: 未提供 GITHUB_TOKEN，无法继续安装${plain}"
+ exit 1
+ fi
+ export GITHUB_TOKEN
+ fi
+ 
+ # Helper for authenticated API calls
  api_req() {
- if [[ -n "$GITHUB_TOKEN" ]]; then
+ if [[ "$USE_TOKEN" == "true" || -n "$GITHUB_TOKEN" ]]; then
  curl -s -H "Authorization: token $GITHUB_TOKEN" "$@"
  else
  curl -s "$@"
