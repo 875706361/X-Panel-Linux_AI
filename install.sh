@@ -253,10 +253,26 @@ install_free_version() {
 
 echo -e "${green}---------------->>>>>>>>>>>>>>>>>>>>>下载资源 ID: ${asset_id}${plain}"
 
-# Download Asset
-curl -L -H "Authorization: token $GITHUB_TOKEN" -H "Accept: application/octet-stream" \
- "https://api.github.com/repos/875706361/X-Panel-Linux_AI/releases/assets/$asset_id" \
- -o "/usr/local/x-ui-linux-${target_arch}.tar.gz"
+# Get browser_download_url for the asset
+download_url=""
+if command -v python3 &>/dev/null; then
+ download_url=$(echo "$release_json" | python3 -c "import sys, json; data=json.load(sys.stdin); print(next((a['browser_download_url'] for a in data.get('assets', []) if a['name'] == '${target_file}'), ''))")
+fi
+
+if [[ -z "$download_url" ]]; then
+ echo -e "${red}无法找到 ${target_file} 的下载链接${plain}"
+ exit 1
+fi
+
+echo -e "${green}---------------->>>>>>>>>>>>>>>>>>>>>下载地址: ${download_url}${plain}"
+
+# Download Asset using browser_download_url
+if [[ "$USE_TOKEN" == "true" && -n "$GITHUB_TOKEN" ]]; then
+ curl -L -H "Authorization: token $GITHUB_TOKEN" \
+ -o "/usr/local/x-ui-linux-${target_arch}.tar.gz" "$download_url"
+else
+ curl -L -o "/usr/local/x-ui-linux-${target_arch}.tar.gz" "$download_url"
+fi
 
 if [[ $? -ne 0 ]]; then
  echo -e "${red}下载 X-Panel 失败${plain}"
