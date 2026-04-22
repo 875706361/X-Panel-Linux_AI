@@ -342,14 +342,15 @@ chmod +x /usr/bin/x-ui
         
         show_access_info
 
-        cp -f x-ui.service /etc/systemd/system/
-        systemctl daemon-reload
-        systemctl enable x-ui
-        systemctl start x-ui
-        systemctl stop warp-go >/dev/null 2>&1
-        wg-quick down wgcf >/dev/null 2>&1
-        systemctl start warp-go >/dev/null 2>&1
-        wg-quick up wgcf >/dev/null 2A>&1
+cp -f x-ui.service /etc/systemd/system/
+systemctl daemon-reload
+systemctl enable x-ui
+systemctl start x-ui
+# 停止可能存在的 warp/wireguard 服务（如未安装则忽略）
+command -v systemctl >/dev/null 2>&1 && systemctl stop warp-go >/dev/null 2>&1
+command -v wg-quick >/dev/null 2>&1 && wg-quick down wgcf >/dev/null 2>&1
+command -v systemctl >/dev/null 2>&1 && systemctl start warp-go >/dev/null 2>&1
+command -v wg-quick >/dev/null 2>&1 && wg-quick up wgcf >/dev/null 2>&1
 
         echo ""
         echo -e "------->>>>${green}X-Panel 免费基础版 ${last_version}${plain}<<<<安装成功，正在启动..."
