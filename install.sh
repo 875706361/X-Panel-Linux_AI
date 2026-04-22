@@ -229,49 +229,48 @@ install_free_version() {
             exit 1
         fi
 
-        echo -e "${green}---------------->>>>>>>>>>>>>>>>>>>>>下载资源 ID: ${asset_id}${plain}"
-        
-        # Download Asset
+echo -e "${green}---------------->>>>>>>>>>>>>>>>>>>>>下载资源 ID: ${asset_id}${plain}"
+
+# Download Asset
 curl -L -H "Authorization: token $GITHUB_TOKEN" -H "Accept: application/octet-stream" \
-    "https://api.github.com/repos/875706361/X-Panel-Linux_AI/releases/assets/$asset_id" \
-             -o "/usr/local/x-ui-linux-${target_arch}.tar.gz"
+ "https://api.github.com/repos/875706361/X-Panel-Linux_AI/releases/assets/$asset_id" \
+ -o "/usr/local/x-ui-linux-${target_arch}.tar.gz"
 
-        if [[ $? -ne 0 ]]; then
-            echo -e "${red}下载 X-Panel 失败${plain}"
-            exit 1
-        fi
+if [[ $? -ne 0 ]]; then
+ echo -e "${red}下载 X-Panel 失败${plain}"
+ exit 1
+fi
 
-        # Download x-ui.sh script (using Raw content API)
-api_req -H "Accept: application/vnd.github.v3.raw" \
-    "https://api.github.com/repos/875706361/X-Panel-Linux_AI/contents/x-ui.sh" \
-    -o /usr/bin/x-ui-temp
+# Stop x-ui service and remove old resources
+if [[ -e /usr/local/x-ui/ ]]; then
+ systemctl stop x-ui
+ rm /usr/local/x-ui/ -rf
+fi
 
-        # Stop x-ui service and remove old resources
-        if [[ -e /usr/local/x-ui/ ]]; then
-            systemctl stop x-ui
-            rm /usr/local/x-ui/ -rf
-        fi
-        
-        sleep 3
-        echo -e "${green}------->>>>>>>>>>>检查并保存安装目录${plain}"
-        echo ""
-        tar zxvf x-ui-linux-$(arch).tar.gz
-        rm x-ui-linux-$(arch).tar.gz -f
-        
-        cd x-ui
-        chmod +x x-ui
-        chmod +x x-ui.sh
+sleep 3
+echo -e "${green}------->>>>>>>>>>>检查并保存安装目录${plain}"
+echo ""
+# Extract tar.gz and move to correct location
+rm -rf /usr/local/x-ui 2>/dev/null
+cd /usr/local
+tar zxvf x-ui-linux-${target_arch}.tar.gz
+mv x-ui-package x-ui
+rm x-ui-linux-${target_arch}.tar.gz -f
 
-        # Check the system's architecture and rename the file accordingly
-        if [[ $(arch) == "armv5" || $(arch) == "armv6" || $(arch) == "armv7" ]]; then
-            mv bin/xray-linux-$(arch) bin/xray-linux-arm
-            chmod +x bin/xray-linux-arm
-        fi
-        chmod +x x-ui bin/xray-linux-$(arch)
+cd x-ui
+chmod +x x-ui
+chmod +x x-ui.sh
 
-        # Update x-ui cli and se set permission
-        mv -f /usr/bin/x-ui-temp /usr/bin/x-ui
-        chmod +x /usr/bin/x-ui
+# Check the system's architecture and rename the file accordingly
+if [[ $(arch) == "armv5" || $(arch) == "armv6" || $(arch) == "armv7" ]]; then
+ mv bin/xray-linux-${target_arch} bin/xray-linux-arm
+ chmod +x bin/xray-linux-arm
+fi
+chmod +x x-ui bin/xray-linux-${target_arch}
+
+# Update x-ui cli and se set permission
+mv -f /usr/bin/x-ui-temp /usr/bin/x-ui
+chmod +x /usr/bin/x-ui
         sleep 2
         echo -e "${green}------->>>>>>>>>>>保存成功${plain}"
         sleep 2
