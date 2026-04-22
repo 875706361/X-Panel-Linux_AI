@@ -393,10 +393,23 @@
 
 {{ template "page/body_start" .}}
 <a-layout id="app" v-cloak :class="themeSwitcher.currentTheme">
-    <a-sidebar></a-sidebar>
-    <a-layout id="content-layout">
-        <a-layout-content>
-            <a-spin :spinning="loadingStates.spinning" :delay="200" :tip="loadingTip">
+  <a-sidebar></a-sidebar>
+  <a-layout id="content-layout">
+    <a-layout-content id="main-content" style="min-height: 100vh; overflow-y: auto;">
+      <div id="pull-refresh" class="pull-refresh-wrapper">
+<div class="pull-refresh-header" :style="{height: pullDistance + 'px', opacity: pullDistance > 0 ? 1 : 0}">
+<div v-if="pullState === 'pulling'" class="pull-refresh-text">
+<a-icon type="arrow-down" /> <span v-text="i18n.pullToRefresh || '下拉刷新'"></span>
+</div>
+<div v-else-if="pullState === 'release'" class="pull-refresh-text">
+<a-icon type="arrow-down" rotate="180" /> <span v-text="i18n.releaseToRefresh || '释放刷新'"></span>
+</div>
+<div v-else-if="pullState === 'loading'" class="pull-refresh-text">
+<a-icon type="loading" spin /> <span v-text="i18n.refreshing || '刷新中...'"></span>
+</div>
+</div>
+        <div class="pull-refresh-content" :style="{transform: 'translateY(' + pullDistance + 'px)'}" ref="refreshContent">
+          <a-spin :spinning="loadingStates.spinning" :delay="200" :tip="loadingTip">
                 <transition name="list" appear>
                     <a-alert type="error" v-if="showAlert && loadingStates.fetched" :style="{ marginBottom: '10px' }"
                         message='{{ i18n "secAlertTitle" }}' color="red" description='{{ i18n "secAlertSsl" }}'
@@ -1099,43 +1112,179 @@ ${dateTime}
     const app = new Vue({
         delimiters: ['[[', ']]'],
         el: '#app',
-        mixins: [MediaQueryMixin],
-        data: {
-            themeSwitcher,
-            loadingStates: {
-                fetched: false,
- spinning: false
- },
-
- status: new Status(),
-            versionModal,
-            logModal,
-            xraylogModal,
-            backupModal,
-            loadingTip: '{{ i18n "loading"}}',
-            showAlert: false,
-            showIp: false,
-            ipLimitEnable: false,
+mixins: [MediaQueryMixin],
+      data: {
+        themeSwitcher,
+        loadingStates: {
+          fetched: false,
+          spinning: false
         },
-        methods: {
-            loading(spinning, tip = '{{ i18n "loading"}}') {
-                this.loadingStates.spinning = spinning;
-                this.loadingTip = tip;
-            },
-            async getStatus() {
-                try {
-                    const msg = await HttpUtil.get('/panel/api/server/status');
-                    if (msg.success) {
-                        if (!this.loadingStates.fetched) {
-                            this.loadingStates.fetched = true;
-                        }
+        pullState: 'idle',
+        pullDistance: 0,
+        pullStartY: 0,
+        pullCurrentY: 0,
+        isPulling: false,
+        isRefreshing: false,
 
-                        this.setStatus(msg.obj, true);
-                    }
-                } catch (e) {
-                    console.error("Failed to get status:", e);
+        status: new Status(),
+        versionModal,
+        logModal,
+        xraylogModal,
+        backupModal,
+        loadingTip: '{{ i18n "loading"}}',
+        showAlert: false,
+        showIp: false,
+        ipLimitEnable: false,
+      },
+      methods: {
+        // 下拉刷新相关方法
+        handleTouchStart(e) {
+          if (this.isRefreshing) return;
+          const el = document.getElementById('main-content');
+          if (el && el.scrollTop > 0) return;
+          this.pullStartY = e.touches[0].clientY;
+          this.isPulling = true;
+        },
+        handleTouchMove(e) {
+          if (!this.isPulling || this.isRefreshing) return;
+          const el = document.getElementById('main-content');
+          if (el && el.scrollTop > 0) {
+            this.pullDistance = 0;
+            this.isPulling = false;
+            return;
+          }
+
+          this.pullCurrentY = e.touches[0].clientY;
+          const diff = this.pullCurrentY - this.pullStartY;
+
+          // 最小触发距离 20px，最大下拉距离 240px
+          if (diff > 20 && diff < 240) {
+            e.preventDefault();
+            const rawProgress = Math.max(0, diff - 20);
+            const dampedDiff = rawProgress * 0.45 + (rawProgress > 120 ? (rawProgress - 120) * 0.12 : 0);
+            this.pullDistance = Math.min(dampedDiff, 110);
+            this.pullState = this.pullDistance >= 70 ? 'release' : 'pulling';
+          }
+        },
+        handleTouchEnd() {
+          if (!this.isPulling || this.isRefreshing) return;
+
+          if (this.pullDistance >= 70) {
+            this.doRefresh();
+          } else {
+            this.resetPull();
+          }
+          this.isPulling = false;
+        },
+        async doRefresh() {
+          this.isRefreshing = true;
+          this.pullState = 'loading';
+          this.pullDistance = 70;
+
+          const success = await this.getStatus(true);
+
+          if (success) {
+            this.$message.success('状态刷新成功');
+          } else {
+            this.$message.warning('状态刷新失败，请检查网络连接');
+          }
+
+          setTimeout(() => {
+            this.resetPull();
+          }, 500);
+        },
+        resetPull() {
+          this.pullState = 'idle';
+          this.pullDistance = 0;
+          this.isRefreshing = false;
+          this.isPulling = false;
+        },
+        // 桌面端鼠标下拉刷新
+        handleMouseDown(e) {
+          if (this.isRefreshing) return;
+          const el = document.getElementById('main-content');
+          if (el && el.scrollTop > 0) return;
+          this.pullStartY = e.clientY;
+          this.isPulling = true;
+        },
+        handleMouseMove(e) {
+          if (!this.isPulling || this.isRefreshing) return;
+          const el = document.getElementById('main-content');
+          if (el && el.scrollTop > 0) {
+            this.pullDistance = 0;
+            this.isPulling = false;
+            return;
+          }
+          const diff = e.clientY - this.pullStartY;
+          if (diff > 20 && diff < 240) {
+            const rawProgress = Math.max(0, diff - 20);
+            const dampedDiff = rawProgress * 0.35 + (rawProgress > 120 ? (rawProgress - 120) * 0.08 : 0);
+            this.pullDistance = Math.min(dampedDiff, 100);
+            this.pullState = this.pullDistance >= 70 ? 'release' : 'pulling';
+          }
+        },
+        handleMouseUp() {
+          if (!this.isPulling || this.isRefreshing) return;
+          if (this.pullDistance >= 70) {
+            this.doRefresh();
+          } else {
+            this.resetPull();
+          }
+          this.isPulling = false;
+        },
+        loading(spinning, tip = '{{ i18n "loading"}}') {
+          this.loadingStates.spinning = spinning;
+          this.loadingTip = tip;
+        },
+        async getStatus(forceRetry = false) {
+          try {
+            const msg = await HttpUtil.get('/panel/api/server/status');
+            if (msg.success && msg.obj) {
+              if (!this.loadingStates.fetched) {
+                this.loadingStates.fetched = true;
+              }
+              this.setStatus(msg.obj);
+              return true;
+            }
+
+            if (forceRetry) {
+              await PromiseUtil.sleep(800);
+              const retryMsg = await HttpUtil.get('/panel/api/server/status');
+              if (retryMsg.success && retryMsg.obj) {
+                if (!this.loadingStates.fetched) {
+                  this.loadingStates.fetched = true;
                 }
-            },
+                this.setStatus(retryMsg.obj);
+                return true;
+              }
+            }
+
+            console.warn('API returned empty or success=false:', msg);
+            return false;
+          } catch (e) {
+            console.error('Failed to get status:', e);
+            if (forceRetry) {
+              try {
+                await PromiseUtil.sleep(800);
+                const retryMsg = await HttpUtil.get('/panel/api/server/status');
+                if (retryMsg.success && retryMsg.obj) {
+                  if (!this.loadingStates.fetched) {
+                    this.loadingStates.fetched = true;
+                  }
+                  this.setStatus(retryMsg.obj);
+                  return true;
+                }
+              } catch (retryError) {
+                console.error('Retry failed to get status:', retryError);
+              }
+            }
+            return false;
+          } finally {
+            if (!this.loadingStates.fetched) {
+              this.loadingStates.fetched = true;
+            }
+          }
+        },
             setStatus(data) {
                 this.status = new Status(data);
             },
@@ -1230,17 +1379,12 @@ ${dateTime}
                 txtModal.show('config.json', JSON.stringify(msg.obj, null, 2), 'config.json');
             },
 
-            // 按钮 1 触发的方法：执行导出数据库 (已解锁)
-            async performRemoteBackup() {
-                this.exportDatabase();
-            },
+    // 按钮：执行导出数据库 (已解锁)
+    async performRemoteBackup() {
+      this.exportDatabase();
+    },
 
- // 按钮 1 触发的方法：执行导出数据库 (已解锁)
- async performRemoteBackup() {
- this.exportDatabase();
- },
-
- // 按钮 2 触发的方法：执行导入数据库 (已解锁)
+    // 按钮：执行导入数据库 (已解锁)
  async performRemoteRestore() {
  this.importDatabase();
  },
@@ -1283,33 +1427,97 @@ ${dateTime}
                 });
                 fileInput.click();
             },
-            setUITheme(themeClass) {
-                const themes = ['theme-standard', 'theme-colorful', 'theme-deepsea', 'theme-twilight', 'theme-forest'];
-                themes.forEach(t => document.body.classList.remove(t));
-                document.body.classList.add(themeClass);
-                localStorage.setItem('x-panel-ui-theme', themeClass);
-                this.$message.success('主题切换成功！');
- },
- async mounted() {
- if (window.location.protocol !== "https:") {
- this.showAlert = true;
- }
+    setUITheme(themeClass) {
+      const themes = ['theme-standard', 'theme-colorful', 'theme-deepsea', 'theme-twilight', 'theme-forest'];
+      themes.forEach(t => document.body.classList.remove(t));
+      document.body.classList.add(themeClass);
+      localStorage.setItem('x-panel-ui-theme', themeClass);
+      this.$message.success('主题切换成功！');
+    },
+  },
+  async mounted() {
+    if (window.location.protocol !== "https:") {
+      this.showAlert = true;
+    }
 
- const msg = await HttpUtil.post('/panel/setting/defaultSettings');
- if (msg.success) {
- this.ipLimitEnable = msg.obj.ipLimitEnable;
- }
+    const msg = await HttpUtil.post('/panel/setting/defaultSettings');
+    if (msg.success) {
+      this.ipLimitEnable = msg.obj.ipLimitEnable;
+    }
 
- while (true) {
- try {
- await this.getStatus();
- } catch (e) {
- console.error(e);
- }
- await PromiseUtil.sleep(2000);
- }
- },
- },
+    // 添加触摸事件监听（移动端）
+    const contentEl = document.getElementById('main-content');
+    if (contentEl) {
+      contentEl.addEventListener('touchstart', (e) => this.handleTouchStart(e), { passive: true });
+      contentEl.addEventListener('touchmove', (e) => this.handleTouchMove(e), { passive: false });
+      contentEl.addEventListener('touchend', () => this.handleTouchEnd(), { passive: true });
+
+      // 桌面端鼠标下拉刷新支持
+      contentEl.addEventListener('mousedown', (e) => this.handleMouseDown(e));
+      contentEl.addEventListener('mousemove', (e) => this.handleMouseMove(e));
+      contentEl.addEventListener('mouseup', () => this.handleMouseUp());
+    }
+
+    // 初始加载状态
+    const success = await this.getStatus();
+    if (!success) {
+      this.$message.error('无法获取系统状态，请检查网络连接或重新登录');
+    }
+
+    // 启动定时状态轮询
+    while (true) {
+      try {
+        await this.getStatus();
+      } catch (e) {
+        console.error(e);
+      }
+      await PromiseUtil.sleep(2000);
+    }
+  },
 });
 </script>
+
+<style>
+/* 下拉刷新样式 */
+.pull-refresh-wrapper {
+  position: relative;
+  overflow: visible;
+}
+
+.pull-refresh-content {
+  transition: transform 0.3s ease;
+  background: inherit;
+}
+
+.pull-refresh-header {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  transition: height 0.2s ease, opacity 0.2s ease;
+}
+
+.pull-refresh-text {
+  color: #8c8c8c;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.pull-refresh-text .anticon {
+  font-size: 16px;
+}
+
+/* 非移动端隐藏下拉刷新提示 */
+@media (max-width: 768px) {
+.pull-refresh-header {
+display: flex !important;
+}
+}
+</style>
 {{ template "page/body_end" .}}

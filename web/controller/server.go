@@ -85,6 +85,10 @@ func (a *ServerController) startTask() {
 func (a *ServerController) status(c *gin.Context) {
 	a.lastGetStatusTime = time.Now()
 
+	if a.lastStatus == nil {
+		a.refreshStatus()
+	}
+
 	jsonObj(c, a.lastStatus, nil)
 }
 
