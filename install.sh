@@ -294,18 +294,18 @@ cd /usr/local
 tar zxvf x-ui-linux-${target_arch}.tar.gz
 rm x-ui-linux-${target_arch}.tar.gz -f
 
-cd x-ui
+cd /usr/local/x-ui
 chmod +x x-ui x-ui.sh
 
 # Check the system's architecture and rename the file accordingly
 if [[ $(arch) == "armv5" || $(arch) == "armv6" || $(arch) == "armv7" ]]; then
- mv bin/xray-linux-${target_arch} bin/xray-linux-arm
- chmod +x bin/xray-linux-arm
+  mv bin/xray-linux-${target_arch} bin/xray-linux-arm
+  chmod +x bin/xray-linux-arm
 fi
 chmod +x x-ui bin/xray-linux-${target_arch}
 
 # Copy x-ui.sh to system path
-cp -f x-ui.sh /usr/bin/x-ui
+cp -f /usr/local/x-ui/x-ui.sh /usr/bin/x-ui
 chmod +x /usr/bin/x-ui
         sleep 2
         echo -e "${green}------->>>>>>>>>>>保存成功${plain}"
