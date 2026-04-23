@@ -395,7 +395,7 @@
 <a-layout id="app" v-cloak :class="themeSwitcher.currentTheme">
   <a-sidebar></a-sidebar>
   <a-layout id="content-layout">
-    <a-layout-content id="main-content" style="min-height: 100vh; overflow-y: auto;">
+    <a-layout-content id="main-content" style="min-height: 100vh; height: auto; overflow-y: auto !important;">
       <div id="pull-refresh" class="pull-refresh-wrapper">
 <div class="pull-refresh-header" :style="{height: pullDistance + 'px', opacity: pullDistance > 0 ? 1 : 0}">
 <div v-if="pullState === 'pulling'" class="pull-refresh-text">
@@ -1138,33 +1138,39 @@ mixins: [MediaQueryMixin],
       },
       methods: {
         // 下拉刷新相关方法
-        handleTouchStart(e) {
-          if (this.isRefreshing) return;
-          const el = document.getElementById('main-content');
-          if (el && el.scrollTop > 0) return;
-          this.pullStartY = e.touches[0].clientY;
-          this.isPulling = true;
-        },
-        handleTouchMove(e) {
-          if (!this.isPulling || this.isRefreshing) return;
-          const el = document.getElementById('main-content');
-          if (el && el.scrollTop > 0) {
-            this.pullDistance = 0;
-            this.isPulling = false;
-            return;
-          }
+ handleTouchStart(e) {
+ if (this.isRefreshing) return;
+ const el = document.getElementById('main-content');
+ // 更宽松的条件：允许有一点滚动误差（5px以内）
+ if (el && el.scrollTop > 5) return;
+ this.pullStartY = e.touches[0].clientY;
+ this.pullStartX = e.touches[0].clientX;
+ this.isPulling = true;
+ },
+ handleTouchMove(e) {
+ if (!this.isPulling || this.isRefreshing) return;
+ const el = document.getElementById('main-content');
+ // 同样放宽条件到5px
+ if (el && el.scrollTop > 5) {
+ this.pullDistance = 0;
+ this.isPulling = false;
+ return;
+ }
+ 
+ this.pullCurrentY = e.touches[0].clientY;
+ this.pullCurrentX = e.touches[0].clientX;
+ const diffY = this.pullCurrentY - this.pullStartY;
+ const diffX = this.pullCurrentX - this.pullStartX;
 
-          this.pullCurrentY = e.touches[0].clientY;
-          const diff = this.pullCurrentY - this.pullStartY;
-
-          // 最小触发距离 20px，最大下拉距离 240px
-          if (diff > 20 && diff < 240) {
-            e.preventDefault();
-            const rawProgress = Math.max(0, diff - 20);
-            const dampedDiff = rawProgress * 0.45 + (rawProgress > 120 ? (rawProgress - 120) * 0.12 : 0);
-            this.pullDistance = Math.min(dampedDiff, 110);
-            this.pullState = this.pullDistance >= 70 ? 'release' : 'pulling';
-          }
+// 最小触发距离 20px，最大下拉距离 240px
+// 只有当垂直距离大于水平距离时才触发下拉（防止水平滚动干扰）
+if (diffY > Math.abs(diffX) && diffY > 20 && diffY < 240) {
+e.preventDefault();
+const rawProgress = Math.max(0, diffY - 20);
+const dampedDiff = rawProgress * 0.45 + (rawProgress > 120 ? (rawProgress - 120) * 0.12 : 0);
+this.pullDistance = Math.min(dampedDiff, 110);
+this.pullState = this.pullDistance >= 70 ? 'release' : 'pulling';
+}
         },
         handleTouchEnd() {
           if (!this.isPulling || this.isRefreshing) return;
@@ -1513,8 +1519,20 @@ mixins: [MediaQueryMixin],
   font-size: 16px;
 }
 
-/* 非移动端隐藏下拉刷新提示 */
-@media (max-width: 768px) {
+/* 默认显示下拉刷新提示（所有设备） */
+.pull-refresh-header {
+display: flex !important;
+}
+
+/* 修复: 确保内容区域正确响应触摸事件 */
+#main-content {
+overflow-y: auto !important;
+-webkit-overflow-scrolling: touch;
+touch-action: pan-y;
+}
+
+/* 非移动端也支持下拉刷新 */
+@media (min-width: 769px) {
 .pull-refresh-header {
 display: flex !important;
 }
