@@ -1025,14 +1025,6 @@
 {{template "modals/textModal"}}
 
 <script>
-    (function () {
-        const savedTheme = localStorage.getItem('x-panel-ui-theme') || 'theme-colorful';
-        document.body.classList.add(savedTheme);
-        console.log('已加载缓存主题: ' + savedTheme);
-    })();
-</script>
-
-<script>
     class CurTotal {
 
         constructor(current, total) {
