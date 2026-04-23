@@ -1,155 +1,419 @@
 {{ template "page/head_start" .}}
-<style id="theme-definitions">
-    /* ==================================================================
-       ★ 全局布局 & 卡片基础 (所有主题通用)
-       ================================================================== */
-    #app,
-    .ant-layout,
-    .ant-layout-content {
-        transition: background 0.5s ease;
-    }
+<style id="cool-theme-styles">
 
-    .glass-card {
-        border-radius: 16px !important;
-        transition: all 0.3s ease;
-        position: relative !important;
-        border: none !important;
-        overflow: hidden;
-        z-index: 1;
-        backdrop-filter: blur(15px) !important;
-        -webkit-backdrop-filter: blur(15px) !important;
-    }
+ /* 【通用】动态流光背景，作为所有主题的底色，增加炫酷感 */
+ body {
+ background: linear-gradient(-45deg, #EB5C20, #ABA0D9, #23a6d5, #23d5ab, #F0C9CF, #A9CD71, #00ffff);
+ background-size: 400% 400%;
+ animation: gradientBG 15s ease infinite;
+ }
 
-    .glass-card:hover {
-        transform: translateY(-5px);
-    }
+ @keyframes gradientBG {
+ 0% { background-position: 0% 50%; }
+ 50% { background-position: 100% 50%; }
+ 100% { background-position: 0% 50%; }
+ }
 
-    .glass-card .ant-card-head {
-        border-bottom: none !important;
-    }
+ /* 【通用】让内容区透明，以透出动态背景 */
+ #app, .ant-layout, .ant-layout-content {
+ background: transparent !important;
+ }
 
-    .glass-card .ant-card-actions {
-        border-top: none !important;
-        background: transparent !important;
-    }
+ /* ==================================================================
+ 核心修正 1：顶部间距 (10px) - (保持不变)
+ ================================================================== */
+ .ant-layout-content {
+ padding-top: 10px !important; 
+ }
 
-    /* ==================================================================
-       ★ 5 大主题样式定义
-       ================================================================== */
+ /* ==================================================================
+ 核心修正 2：卡片背景 (取消所有边框效果) - (保持不变)
+ ================================================================== */
+ 
+ /* 1. 卡片基础样式 */
+ .glass-card {
+ border-radius: 16px !important;
+ transition: all 0.3s ease;
+ position: relative !important;
+ border: none !important;
+ background: transparent !important;
+ overflow: hidden; 
+ z-index: 1; 
+ box-shadow: none !important;
+ animation: none !important;
+ }
+ .glass-card:hover {
+ transform: translateY(-5px); 
+ }
 
-    /* 1. 标准布局 (Standard) */
-    .theme-standard body {
-        background: #f0f2f5;
-    }
+ /* 2. 玻璃背景层 (::before) */
+ .glass-card::before {
+ content: '';
+ position: absolute;
+ top: 0;
+ left: 0;
+ right: 0;
+ bottom: 0;
+ border-radius: 16px;
+ z-index: -1;
+ backdrop-filter: blur(15px) !important;
+ -webkit-backdrop-filter: blur(15px) !important;
+ }
 
-    .theme-standard.dark body {
-        background: #000;
-    }
+ /* 3. 确保内容在最前面 */
+ .glass-card .ant-card-head,
+ .glass-card .ant-card-body {
+ position: relative;
+ z-index: 1;
+ background: transparent !important;
+ }
 
-    .theme-standard .glass-card {
-        background: #fff !important;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
-    }
+ /* 【主题兼容：亮色-light】 */
+ .light .glass-card::before {
+ background: rgba(255, 255, 255, 0.2) !important; 
+ box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15) !important;
+ }
+ /* 【主题兼容：暗色-dark / 黑色-black】 */
+ .dark .glass-card::before,
+ .black .glass-card::before {
+ background: rgba(0, 0, 0, 0.1) !important; 
+ box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37) !important;
+ }
 
-    .theme-standard.dark .glass-card {
-        background: #141414 !important;
-    }
+ /* 通用字体颜色覆盖 */
+ .light .glass-card * {
+ color: #2c3e50 !important;
+ }
+ .dark .glass-card *,
+ .black .glass-card * {
+ color: #ecf0f1 !important;
+ }
+ .light .glass-card .ant-statistic-content-value,
+ .dark .glass-card .ant-statistic-content-value,
+ .black .glass-card .ant-statistic-content-value {
+ color: inherit !important;
+ }
 
-    /* 2. 炫彩动画 (Colorful) */
-    .theme-colorful body {
-        background: linear-gradient(-45deg, #EB5C20, #ABA0D9, #23a6d5, #23d5ab, #F0C9CF, #A9CD71, #00ffff);
-        background-size: 400% 400%;
-        animation: gradientBG 15s ease infinite;
-    }
+ /* ==================================================================
+ ★ 综合修正：解决之前所有问题 (颜色、下划线、滚动条)
+ ================================================================== */
 
-    @keyframes gradientBG {
-        0% {
-            background-position: 0% 50%;
-        }
+ /* 移除卡片标题的下边框 */
+ .glass-card .ant-card-head {
+ border-bottom: none !important;
+ }
 
-        50% {
-            background-position: 100% 50%;
-        }
+ /* 修正卡片底部操作文字的颜色 */
+ .glass-card .ant-card-actions {
+ border-top: none !important;
+ background: transparent !important;
+ }
+ .light .glass-card .ant-card-actions span {
+ color: rgba(0, 0, 0, 0.65) !important;
+ transition: color 0.3s;
+ }
+ .light .glass-card .ant-card-actions > li > span:hover span,
+ .light .glass-card .ant-card-actions > li > span:hover .anticon {
+ color: #1890ff !important;
+ }
+ .dark .glass-card .ant-card-actions span,
+ .black .glass-card .ant-card-actions span {
+ color: rgba(255, 255, 255, 0.85) !important;
+ transition: color 0.3s;
+ }
+ .dark .glass-card .ant-card-actions > li > span:hover span,
+ .black .glass-card .ant-card-actions > li > span:hover span,
+ .dark .glass-card .ant-card-actions > li > span:hover .anticon,
+ .black .glass-card .ant-card-actions > li > span:hover .anticon {
+ color: #40a9ff !important;
+ }
 
-        100% {
-            background-position: 0% 50%;
-        }
-    }
+ /* 隐藏【X-Panel面板】卡片内容区产生的横向滚动条 */
+ .glass-card .ant-card-body div[style*="overflow-x: auto"] {
+ -ms-overflow-style: none; /* IE and Edge */
+ scrollbar-width: none; /* Firefox */
+ }
+ .glass-card .ant-card-body div[style*="overflow-x: auto"]::-webkit-scrollbar {
+ display: none; /* Safari and Chrome */
+ }
 
-    .theme-colorful .glass-card {
-        background: rgba(255, 255, 255, 0.2) !important;
-        color: #fff;
-    }
 
-    .theme-colorful.dark .glass-card {
-        background: rgba(0, 0, 0, 0.3) !important;
-    }
+ /* ==================================================================
+ ★★★★★ 最终对齐方案：实现底部严格对齐 ★★★★★
+ ================================================================== */
+ 
+ /* 外层容器：确保内层 Ant-Row 可以被拉伸 (保持不变) */
+ .main-content-row {
+ display: flex;
+ flex-direction: column; 
+ flex-grow: 1;
+ }
 
-    /* 3. 深海科技 (Deep Sea) */
-    .theme-deepsea body {
-        background: radial-gradient(circle at center, #001529 0%, #000814 100%);
-    }
+ /* 内层容器：包含两列的 Ant-Row，强制其为 flex 布局并拉伸子项 */
+ .main-content-row > .ant-row { 
+ display: flex !important;
+ align-items: stretch !important; /* 核心：使所有列（Ant-Col）等高 */
+ flex-grow: 1;
+ flex-wrap: wrap; /* 确保在移动设备上可以正常换行 */
+ }
 
-    .theme-deepsea .glass-card {
-        background: rgba(0, 33, 64, 0.6) !important;
-        border: 1px solid rgba(0, 161, 233, 0.2) !important;
-    }
+ /* 目标列（Ant-Col）：设置为 flex 布局，以便控制其内部卡片的排列 */
+ .main-content-row > .ant-row > .ant-col {
+ display: flex;
+ flex-direction: column; 
+ /* 移除了 height: 100%，因为 align-items: stretch 已经处理了高度，这样更可靠 */
+ }
 
-    .theme-deepsea .glass-card * {
-        color: #00a1e9 !important;
-    }
+ /* 让【右侧】列的最后一个卡片（即 Ant-Col:nth-child(2)）自动伸长，以填补剩余的垂直空间 */
+ .main-content-row > .ant-row > .ant-col:nth-child(2) > .glass-card:last-child {
+ flex-grow: 1; 
+ }
 
-    /* 4. 暮光薰衣 (Twilight) */
-    .theme-twilight body {
-        background: linear-gradient(135deg, #312450 0%, #5e42a6 100%);
-    }
+ /* 移除两个主列中，所有卡片或组件的最后一个元素的底部边距，以实现完美对齐 */
+ .main-content-row > .ant-row > .ant-col > *:last-child {
+ margin-bottom: 0 !important;
+ }
 
-    .theme-twilight .glass-card {
-        background: rgba(65, 50, 100, 0.6) !important;
-        border: 1px solid rgba(230, 230, 250, 0.2) !important;
-    }
+ /* 确保被拉伸卡片的内容区域也跟着拉伸，并垂直居中（如果需要） */
+ .main-content-row > .ant-row > .ant-col:nth-child(2) > .glass-card:last-child .ant-card-body {
+ flex-grow: 1;
+ display: flex;
+ flex-direction: column;
+ justify-content: center;
+ }
 
-    .theme-twilight .glass-card * {
-        color: #e6e6fa !important;
-    }
+ /* 【通用】原始的必要样式保留 */
+ .ip-hidden { filter: blur(10px); user-select: none; }
+ .running-animation .ant-badge-status-dot { animation: runningAnimation 1.2s linear infinite; }
+ @keyframes runningAnimation { 0%,50%,100% {transform: scale(1);opacity: 1;} 10% {transform: scale(1.5);opacity: .2;} }
 
-    /* 5. 幽林秘境 (Forest) */
-    .theme-forest body {
-        background: linear-gradient(to bottom, #0a2e0a, #000);
-    }
+ /* === X-Panel LOGO 炫酷效果样式 (保留) === */
+ @keyframes neonGlow {
+ 0%, 100% {
+ text-shadow: 0 0 5px #00aaff, 0 0 10px #00aaff, 0 0 20px #00aaff, 0 0 40px #00aaff;
+ }
+ 50% {
+ text-shadow: 0 0 10px #ff0077, 0 0 20px #ff0077, 0 0 40px #ff0077, 0 0 80px #ff0077;
+ }
+ }
 
-    .theme-forest .glass-card {
-        background: rgba(26, 62, 26, 0.6) !important;
-        border: 1px solid rgba(0, 255, 127, 0.2) !important;
-    }
+ .x-panel-logo-text {
+ font-size: 3rem; 
+ font-weight: 900;
+ margin: 0;
+ color: #fff; 
+ text-transform: capitalize;
+ letter-spacing: 2px;
+ animation: neonGlow 5s ease-in-out infinite alternate;
+ text-align: center;
+ line-height: 1.2;
+ }
 
-    .theme-forest .glass-card * {
-        color: #00ff7f !important;
-    }
-
-    /* logo 动画 */
-    @keyframes neonGlow {
-
-        0%,
-        100% {
-            text-shadow: 0 0 10px #00aaff, 0 0 20px #00aaff;
-        }
-
-        50% {
-            text-shadow: 0 0 15px #ff0077, 0 0 30px #ff0077;
-        }
-    }
-
-    .x-panel-logo-text {
-        font-size: 3rem;
-        font-weight: 900;
-        color: #fff;
-        animation: neonGlow 5s ease-in-out infinite alternate;
-        text-align: center;
-    }
+ .x-panel-desc {
+ text-align: center;
+ font-size: 1rem;
+ color: inherit;
+ line-height: 1.5;
+ }
+ .x-panel-desc b {
+ font-weight: normal;
+ }
+	
 </style>
 
 <style id="default-theme-styles">
+ /* 核心间距：确保内容区与侧边栏有间距 (来自您的新要求) */
+ @media (min-width: 769px) {
+ .ant-layout-content {
+ margin: 24px 16px;
+ }
+ }
+ @media (max-width: 768px) {
+ .ant-tabs-nav .ant-tabs-tab {
+ margin: 0;
+ padding: 12px .5rem;
+ }
+ }
+ 
+ /* 其他您提供的通用样式 */
+ .ant-tabs-bar { margin: 0; }
+ .ant-list-item { display: block; }
+ .alert-msg { color: rgb(194, 117, 18); font-weight: normal; font-size: 16px; padding: .5rem 1rem; text-align: center; background: rgb(255 145 0 / 15%); margin: 1.5rem 2.5rem 0rem; border-radius: .5rem; transition: all 0.5s; animation: signal 3s cubic-bezier(0.18, 0.89, 0.32, 1.28) infinite; }
+ .alert-msg:hover { cursor: default; transition-duration: .3s; animation: signal 0.9s ease infinite; }
+ @keyframes signal { 0% { box-shadow: 0 0 0 0 rgba(194, 118, 18, 0.5); } 50% { box-shadow: 0 0 0 6px rgba(0, 0, 0, 0); } 100% { box-shadow: 0 0 0 6px rgba(0, 0, 0, 0); } }
+ .alert-msg>i { color: inherit; font-size: 24px; }
+ .dark .ant-input-password-icon { color: var(--dark-color-text-primary); }
+ .ant-collapse-content-box .ant-alert { margin-block-end: 12px; }
+
+ /* ==================================================================
+ ★ 综合修正：解决之前所有问题 (颜色、下划线、滚动条)
+ ================================================================== */
+
+ /* 移除卡片标题的下边框 */
+ .glass-card .ant-card-head {
+ border-bottom: none !important;
+ }
+
+ /* 移除卡片底部操作的顶部边框 */
+ .glass-card .ant-card-actions {
+ border-top: none !important;
+ }
+ 
+ .glass-card:hover {
+ transform: translateY(-5px);
+ transition: transform 0.3s ease;
+ }
+
+ /* 隐藏【X-Panel面板】卡片内容区产生的横向滚动条 */
+ .glass-card .ant-card-body div[style*="overflow-x: auto"] {
+ -ms-overflow-style: none;
+ /* IE and Edge */
+ scrollbar-width: none;
+ /* Firefox */
+ }
+
+ .glass-card .ant-card-body div[style*="overflow-x: auto"]::-webkit-scrollbar {
+ display: none;
+ /* Safari and Chrome */
+ }
+
+ /* 修正卡片底部操作文字的颜色 */
+ .glass-card .ant-card-actions {
+ border-top: none !important;
+ background: transparent !important;
+ }
+
+ .light .glass-card .ant-card-actions span {
+ color: rgba(0, 0, 0, 0.65) !important;
+ transition: color 0.3s;
+ }
+
+ .light .glass-card .ant-card-actions>li>span:hover span,
+ .light .glass-card .ant-card-actions>li>span:hover .anticon {
+ color: #1890ff !important;
+ }
+
+ .dark .glass-card .ant-card-actions span,
+ .black .glass-card .ant-card-actions span {
+ color: rgba(255, 255, 255, 0.85) !important;
+ transition: color 0.3s;
+ }
+
+ .dark .glass-card .ant-card-actions>li>span:hover span,
+ .black .glass-card .ant-card-actions>li>span:hover span,
+ .dark .glass-card .ant-card-actions>li>span:hover .anticon,
+ .black .glass-card .ant-card-actions>li>span:hover .anticon {
+ color: #40a9ff !important;
+ }
+
+ /* 通用字体颜色覆盖 */
+ .light .glass-card * {
+ color: #2c3e50 !important;
+ }
+
+ .dark .glass-card *,
+ .black .glass-card * {
+ color: #ecf0f1 !important;
+ }
+
+ .light .glass-card .ant-statistic-content-value,
+ .dark .glass-card .ant-statistic-content-value,
+ .black .glass-card .ant-statistic-content-value {
+ color: inherit !important;
+ }
+
+ /* ==================================================================
+ ★★★★★ 最终对齐方案：实现底部严格对齐 ★★★★★
+ ================================================================== */
+
+ /* 外层容器：确保内层 Ant-Row 可以被拉伸 (保持不变) */
+ .main-content-row {
+ display: flex;
+ flex-direction: column;
+ flex-grow: 1;
+ }
+
+ /* 内层容器：包含两列的 Ant-Row，强制其为 flex 布局并拉伸子项 */
+ .main-content-row>.ant-row {
+ display: flex !important;
+ align-items: stretch !important;
+ /* 核心：使所有列（Ant-Col）等高 */
+ flex-grow: 1;
+ flex-wrap: wrap;
+ /* 确保在移动设备上可以正常换行 */
+ }
+
+ /* 目标列（Ant-Col）：设置为 flex 布局，以便控制其内部卡片的排列 */
+ .main-content-row>.ant-row>.ant-col {
+ display: flex;
+ flex-direction: column;
+ }
+
+ /* 让【右侧】列的最后一个卡片（即 Ant-Col:nth-child(2)）自动伸长，以填补剩余的垂直空间 */
+ .main-content-row>.ant-row>.ant-col:nth-child(2)>.glass-card:last-child {
+ flex-grow: 1;
+ }
+
+ /* 移除两个主列中，所有卡片或组件的最后一个元素的底部边距，以实现完美对齐 */
+ .main-content-row>.ant-row>.ant-col>*:last-child {
+ margin-bottom: 0 !important;
+ }
+
+ /* 确保被拉伸卡片的内容区域也跟着拉伸，并垂直居中（如果需要） */
+ .main-content-row>.ant-row>.ant-col:nth-child(2)>.glass-card:last-child .ant-card-body {
+ flex-grow: 1;
+ display: flex;
+ flex-direction: column;
+ justify-content: center;
+ }
+
+ /* 【通用】原始的必要样式保留 */
+ .ip-hidden {
+ filter: blur(10px);
+ user-select: none;
+ }
+
+ .running-animation .ant-badge-status-dot {
+ animation: runningAnimation 1.2s linear infinite;
+ }
+
+ @keyframes runningAnimation {
+
+ 0%,
+ 50%,
+ 100% {
+ transform: scale(1);
+ opacity: 1;
+ }
+
+ 10% {
+ transform: scale(1.5);
+ opacity: .2;
+ }
+ }
+
+ /* === X-Panel LOGO 标准样式 (无动画) === */
+ .x-panel-logo-text {
+ font-size: 3rem;
+ font-weight: 900;
+ margin: 0;
+ text-transform: capitalize;
+ letter-spacing: 2px;
+ text-align: center;
+ line-height: 1.2;
+ }
+
+ .x-panel-desc {
+ text-align: center;
+ font-size: 1rem;
+ color: inherit;
+ line-height: 1.5;
+ }
+
+ .x-panel-desc b {
+ font-weight: normal;
+ }
+</style>
     /* 核心间距：确保内容区与侧边栏有间距 (来自您的新要求) */
     @media (min-width: 769px) {
         .ant-layout-content {
@@ -393,38 +657,26 @@
 
 {{ template "page/body_start" .}}
 <a-layout id="app" v-cloak :class="themeSwitcher.currentTheme">
-  <a-sidebar></a-sidebar>
-  <a-layout id="content-layout">
-    <a-layout-content id="main-content" style="min-height: 100vh; height: auto; overflow-y: auto !important;">
-      <div id="pull-refresh" class="pull-refresh-wrapper">
-<div class="pull-refresh-header" :style="{height: pullDistance + 'px', opacity: pullDistance > 0 ? 1 : 0}">
-<div v-if="pullState === 'pulling'" class="pull-refresh-text">
-<a-icon type="arrow-down" /> <span v-text="i18n.pullToRefresh || '下拉刷新'"></span>
-</div>
-<div v-else-if="pullState === 'release'" class="pull-refresh-text">
-<a-icon type="arrow-down" rotate="180" /> <span v-text="i18n.releaseToRefresh || '释放刷新'"></span>
-</div>
-<div v-else-if="pullState === 'loading'" class="pull-refresh-text">
-<a-icon type="loading" spin /> <span v-text="i18n.refreshing || '刷新中...'"></span>
-</div>
-</div>
-        <div class="pull-refresh-content" :style="{transform: 'translateY(' + pullDistance + 'px)'}" ref="refreshContent">
-          <a-spin :spinning="loadingStates.spinning" :delay="200" :tip="loadingTip">
-                <transition name="list" appear>
-                    <a-alert type="error" v-if="showAlert && loadingStates.fetched" :style="{ marginBottom: '10px' }"
-                        message='{{ i18n "secAlertTitle" }}' color="red" description='{{ i18n "secAlertSsl" }}'
-                        show-icon closable>
-                    </a-alert>
-                </transition>
-                <transition name="list" appear>
-                    <template>
-                        <a-row v-if="!loadingStates.fetched">
-                            <a-card
-                                :style="{ textAlign: 'center', padding: '30px 0', marginTop: '10px', background: 'transparent', border: 'none' }">
-                                <a-spin tip='{{ i18n "loading" }}'></a-spin>
-                            </a-card>
-                        </a-row>
-                        <a-row v-else class="main-content-row">
+	<a-sidebar></a-sidebar>
+	<a-layout id="content-layout">
+		<a-layout-content>
+			<a-spin :spinning="loadingStates.spinning" :delay="200" :tip="loadingTip">
+				<transition name="list" appear>
+					<a-alert type="error" v-if="showAlert && loadingStates.fetched" :style="{ marginBottom: '10px' }"
+						message='{{ i18n "secAlertTitle" }}'
+						color="red"
+						description='{{ i18n "secAlertSsl" }}'
+						show-icon closable>
+					</a-alert>
+				</transition>
+				<transition name="list" appear>
+					<template>
+						<a-row v-if="!loadingStates.fetched">
+							<a-card :style="{ textAlign: 'center', padding: '30px 0', marginTop: '10px', background: 'transparent', border: 'none' }">
+								<a-spin tip='{{ i18n "loading" }}'></a-spin>
+							</a-card>
+						</a-row>
+						<a-row v-else class="main-content-row">
                             <a-row :gutter="[isMobile ? 8 : 16, isMobile ? 8 : 16]" :style="{ flex: '1 1 100%' }">
 
                                 <a-col :sm="24" :lg="16">
