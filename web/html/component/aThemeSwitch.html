@@ -1,24 +1,23 @@
 {{define "component/themeSwitchTemplate"}}
 <template>
-  <a-menu :theme="themeSwitcher.currentTheme" mode="inline" selected-keys="">
-    <a-sub-menu>
-      <span slot="title">
-        <a-icon type="bulb" :theme="themeSwitcher.isDarkTheme ? 'filled' : 'outlined'"></a-icon>
-        <span>{{ i18n "menu.theme" }}</span>
-      </span>
-      <a-menu-item id="change-theme" class="ant-menu-theme-switch" @mousedown="themeSwitcher.animationsOff()">
-        <span>{{ i18n "menu.dark" }}</span>
-        <a-switch :style="{ marginLeft: '2px' }" size="small" :default-checked="themeSwitcher.isDarkTheme"
-          @change="themeSwitcher.toggleTheme()"></a-switch>
-      </a-menu-item>
-      <a-menu-item id="change-theme-ultra" v-if="themeSwitcher.isDarkTheme" class="ant-menu-theme-switch"
-        @mousedown="themeSwitcher.animationsOffUltra()">
-        <span>{{ i18n "menu.ultraDark" }}</span>
-        <a-checkbox :style="{ marginLeft: '2px' }" :checked="themeSwitcher.isUltra"
-          @click="themeSwitcher.toggleUltra()"></a-checkbox>
-      </a-menu-item>
-    </a-sub-menu>
-  </a-menu>
+    <div class="theme-switch-wrapper" @mousedown="themeSwitcher.animationsOff()">
+        <div class="theme-switch-container" :class="{ 'dark': themeSwitcher.isDarkTheme }" @click="themeSwitcher.toggleTheme()">
+            <div class="theme-switch-slider">
+                <span class="theme-icon sun">
+                    <svg viewBox="0 0 24 24" width="14" height="14">
+                        <circle cx="12" cy="12" r="5" fill="currentColor"/>
+                        <path d="M12 2v2M12 20v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M2 12h2M20 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                    </svg>
+                </span>
+                <span class="theme-icon moon">
+                    <svg viewBox="0 0 24 24" width="14" height="14">
+                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" fill="currentColor"/>
+                    </svg>
+                </span>
+            </div>
+        </div>
+        <span class="theme-label" v-text="themeSwitcher.isDarkTheme ? '深色' : '浅色'"></span>
+    </div>
 </template>
 {{end}}
 
