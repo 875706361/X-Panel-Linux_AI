@@ -803,24 +803,7 @@
                                         </div>
                                     </a-card>
 
-                                    <a-card title="首页 UI 主题切换" hoverable :bordered="true" class="glass-card"
-                                        :style="{ marginBottom: '16px' }">
-                                        <div style="display: flex; flex-wrap: wrap; gap: 8px;">
-                                            <a-button size="small" @click="setUITheme('theme-standard')">标准布局</a-button>
-                                            <a-button size="small" type="primary"
-                                                @click="setUITheme('theme-colorful')">炫彩动画</a-button>
-                                            <a-button size="small" type="danger"
-                                                @click="setUITheme('theme-deepsea')">深海科技</a-button>
-                                            <a-button size="small"
-                                                style="background: #722ed1; color: #fff; border:none;"
-                                                @click="setUITheme('theme-twilight')">暮光薰衣</a-button>
-                                            <a-button size="small"
-                                                style="background: #237804; color: #fff; border:none;"
-                                                @click="setUITheme('theme-forest')">幽林秘境</a-button>
-                                        </div>
-                                    </a-card>
-
-                                    <a-card title='{{ i18n "pages.index.operationHours" }}' hoverable :bordered="true"
+                <a-card title='{{ i18n "pages.index.operationHours" }}' hoverable :bordered="true"
                                         class="glass-card" :style="{ marginBottom: '16px' }">
                                         <a-tag :color="status.xray.color">Xray: [[
                                             TimeFormatter.formatSecond(status.appStats.uptime) ]]</a-tag>
@@ -1592,15 +1575,8 @@ this.pullState = this.pullDistance >= 70 ? 'release' : 'pulling';
                 });
                 fileInput.click();
             },
-    setUITheme(themeClass) {
-      const themes = ['theme-standard', 'theme-colorful', 'theme-deepsea', 'theme-twilight', 'theme-forest'];
-      themes.forEach(t => document.body.classList.remove(t));
-      document.body.classList.add(themeClass);
-      localStorage.setItem('x-panel-ui-theme', themeClass);
-      this.$message.success('主题切换成功！');
-    },
-  },
-  async mounted() {
+        },
+        async mounted() {
     if (window.location.protocol !== "https:") {
       this.showAlert = true;
     }
