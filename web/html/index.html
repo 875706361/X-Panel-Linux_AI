@@ -502,13 +502,24 @@
                                         </a-row>
                                     </a-card>
 
-                                    <a-card title='{{ i18n "pages.index.xrayStatus" }}' hoverable :bordered="true"
-                                        class="glass-card" :style="{ marginBottom: '16px' }">
-                                        <template #extra>
-                                            <template v-if="status.xray.state != 'error'">
-                                                <a-badge status="processing" class="running-animation"
-                                                    :text="status.xray.stateMsg" :color="status.xray.color" />
-                                            </template>
+<a-card id="xray-status-card" title='{{ i18n "pages.index.xrayStatus" }}' hoverable :bordered="true"
+ class="glass-card" :style="{ marginBottom: '16px' }">
+<template #extra>
+<div class="card-pull-refresh" :style="{transform: 'translateY(' + pullDistance + 'px)', opacity: pullDistance > 0 ? 1 : 0}">
+<div v-if="pullState === 'pulling'" class="card-pull-refresh-text">
+<a-icon type="arrow-down" /> <span v-text="i18n.pullToRefresh || '下拉刷新'"></span>
+</div>
+<div v-else-if="pullState === 'release'" class="card-pull-refresh-text">
+<a-icon type="arrow-down" rotate="180" /> <span v-text="i18n.releaseToRefresh || '释放刷新'"></span>
+</div>
+<div v-else-if="pullState === 'loading'" class="card-pull-refresh-text">
+<a-icon type="loading" spin /> <span v-text="i18n.refreshing || '刷新中...'"></span>
+</div>
+</div>
+<template v-if="status.xray.state != 'error'">
+<a-badge status="processing" class="running-animation"
+:text="status.xray.stateMsg" :color="status.xray.color" />
+</template>
                                             <template v-else>
                                                 <a-popover :overlay-class-name="themeSwitcher.currentTheme">
                                                     <span slot="title">
@@ -1451,18 +1462,22 @@ this.pullState = this.pullDistance >= 70 ? 'release' : 'pulling';
       this.ipLimitEnable = msg.obj.ipLimitEnable;
     }
 
-    // 添加触摸事件监听（移动端）
-    const contentEl = document.getElementById('main-content');
-    if (contentEl) {
-      contentEl.addEventListener('touchstart', (e) => this.handleTouchStart(e), { passive: true });
-      contentEl.addEventListener('touchmove', (e) => this.handleTouchMove(e), { passive: false });
-      contentEl.addEventListener('touchend', () => this.handleTouchEnd(), { passive: true });
+                        // 为 Xray 状态卡片添加下拉刷新
+                        const xrayStatusCard = document.getElementById('xray-status-card');
+                        if (xrayStatusCard) {
+                                xrayStatusCard.style.position = 'relative';
+                                xrayStatusCard.style.touchAction = 'pan-y';
+                                xrayStatusCard.addEventListener('touchstart', (e) => this.handleTouchStart(e), { passive: true });
+                                xrayStatusCard.addEventListener('touchmove', (e) => this.handleTouchMove(e), { passive: false });
+                                xrayStatusCard.addEventListener('touchend', () => this.handleTouchEnd(), { passive: true });
 
-      // 桌面端鼠标下拉刷新支持
-      contentEl.addEventListener('mousedown', (e) => this.handleMouseDown(e));
-      contentEl.addEventListener('mousemove', (e) => this.handleMouseMove(e));
-      contentEl.addEventListener('mouseup', () => this.handleMouseUp());
-    }
+                                // 桌面端鼠标下拉刷新支持
+                                xrayStatusCard.addEventListener('mousedown', (e) => this.handleMouseDown(e));
+                                xrayStatusCard.addEventListener('mousemove', (e) => this.handleMouseMove(e));
+                                xrayStatusCard.addEventListener('mouseup', () => this.handleMouseUp());
+                        }
+
+                        // 保持主内容的滚动能力但不绑定下拉
 
     // 初始加载状态
     const success = await this.getStatus();
@@ -1524,14 +1539,45 @@ this.pullState = this.pullDistance >= 70 ? 'release' : 'pulling';
 display: flex !important;
 }
 
-/* 修复: 确保内容区域正确响应触摸事件 */
+/* 保持主内容的滚动能力但不绑定下拉 */
 #main-content {
-overflow-y: auto !important;
+overflow-y: auto;
 -webkit-overflow-scrolling: touch;
+}
+
+/* Xray 状态卡片下拉刷新样式 */
+#xray-status-card {
+position: relative;
+overflow: visible;
 touch-action: pan-y;
 }
 
-/* 非移动端也支持下拉刷新 */
+#xray-status-card .card-pull-refresh {
+position: absolute;
+top: -50px;
+left: 0;
+right: 0;
+display: flex;
+align-items: center;
+justify-content: center;
+height: 50px;
+transition: transform 0.3s ease;
+z-index: 10;
+}
+
+#xray-status-card .card-pull-refresh-text {
+color: #8c8c8c;
+font-size: 14px;
+display: flex;
+align-items: center;
+gap: 8px;
+}
+
+#xray-status-card .card-pull-refresh-text .anticon {
+font-size: 16px;
+}
+
+/* 修复: 移除之前的全局下拉样式 */
 @media (min-width: 769px) {
 .pull-refresh-header {
 display: flex !important;
