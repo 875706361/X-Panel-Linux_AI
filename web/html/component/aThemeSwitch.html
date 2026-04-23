@@ -1,41 +1,17 @@
 {{define "component/themeSwitchTemplate"}}
 <template>
-    <div class="theme-dropdown-wrapper" @mousedown="themeSwitcher.animationsOff()">
-        <div class="theme-dropdown-trigger" :class="{ 'is-dark': themeSwitcher.isDarkTheme, 'is-open': isOpen }" @click="toggleDropdown">
-            <span class="theme-icon-bulb">
-                <svg viewBox="0 0 24 24" width="18" height="18">
-                    <path d="M9 21c0 .5.4 1 1 1h4c.6 0 1-.5 1-1v-1H9v1zm3-19C8.1 2 5 5.1 5 9c0 2.4 1.2 4.5 3 5.7V17c0 .5.4 1 1 1h6c.6 0 1-.5 1-1v-2.3c1.8-1.3 3-3.4 3-5.7 0-3.9-3.1-7-7-7z" :fill="themeSwitcher.isDarkTheme ? '#ffd700' : '#666'"/>
-                </svg>
+    <a-menu :theme="themeSwitcher.currentTheme" mode="inline" selected-keys="">
+        <a-sub-menu key="theme">
+            <span slot="title">
+                <a-icon type="bulb" :theme="themeSwitcher.isDarkTheme ? 'filled' : 'outlined'"></a-icon>
+                <span>{{ i18n "menu.theme" }}</span>
             </span>
-            <span class="theme-text" v-text="themeSwitcher.isDarkTheme ? '深色' : '浅色'"></span>
-            <span class="theme-arrow" :class="{ 'is-up': isOpen }">
-                <svg viewBox="0 0 24 24" width="12" height="12">
-                    <path d="M7 10l5 5 5-5z" fill="currentColor"/>
-                </svg>
-            </span>
-        </div>
-        <div class="theme-dropdown-menu" :class="{ 'show': isOpen }">
-            <div class="theme-option" :class="{ 'active': !themeSwitcher.isDarkTheme }" @click="selectTheme(false)">
-                <span class="option-icon light">
-                    <svg viewBox="0 0 24 24" width="16" height="16">
-                        <circle cx="12" cy="12" r="5" fill="currentColor"/>
-                        <path d="M12 2v2M12 20v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M2 12h2M20 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-                    </svg>
-                </span>
-                <span class="option-text">浅色</span>
-                <span class="option-check" v-if="!themeSwitcher.isDarkTheme">✓</span>
-            </div>
-            <div class="theme-option" :class="{ 'active': themeSwitcher.isDarkTheme }" @click="selectTheme(true)">
-                <span class="option-icon dark">
-                    <svg viewBox="0 0 24 24" width="16" height="16">
-                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" fill="currentColor"/>
-                    </svg>
-                </span>
-                <span class="option-text">深色</span>
-                <span class="option-check" v-if="themeSwitcher.isDarkTheme">✓</span>
-            </div>
-        </div>
-    </div>
+            <a-menu-item class="theme-switch-item" @click="themeSwitcher.toggleTheme()">
+                <span>深色</span>
+                <a-switch :style="{ marginLeft: '10px' }" size="small" :checked="themeSwitcher.isDarkTheme"></a-switch>
+            </a-menu-item>
+        </a-sub-menu>
+    </a-menu>
 </template>
 {{end}}
 
@@ -44,24 +20,9 @@
     <a-space @mousedown="themeSwitcher.animationsOff()" id="change-theme" direction="vertical" :size="10" :style="{ width: '100%' }">
         <a-space direction="horizontal" size="small">
             <a-switch size="small" :default-checked="themeSwitcher.isDarkTheme" @change="themeSwitcher.toggleTheme()"></a-switch>
-            <span>{{ i18n "menu.dark" }}</span>
+            <span>深色</span>
         </a-space>
     </a-space>
-</template>
-{{end}}
-
-{{define "component/themeSwitchTemplateLogin"}}
-<template>
-  <a-space @mousedown="themeSwitcher.animationsOff()" id="change-theme" direction="vertical" :size="10" :style="{ width: '100%' }">
-    <a-space direction="horizontal" size="small">
-      <a-switch size="small" :default-checked="themeSwitcher.isDarkTheme" @change="themeSwitcher.toggleTheme()"></a-switch>
-      <span>{{ i18n "menu.dark" }}</span>
-    </a-space>
-    <a-space v-if="themeSwitcher.isDarkTheme" direction="horizontal" size="small">
-      <a-checkbox :checked="themeSwitcher.isUltra" @click="themeSwitcher.toggleUltra()"></a-checkbox>
-      <span>{{ i18n "menu.ultraDark" }}</span>
-    </a-space>
-  </a-space>
 </template>
 {{end}}
 
@@ -118,39 +79,21 @@
                 }
             };
         }
-        const themeSwitcher = createThemeSwitcher();
-        Vue.component('a-theme-switch', {
-            template: `{{template "component/themeSwitchTemplate"}}`,
-            data: function() {
-                return {
-                    themeSwitcher: themeSwitcher,
-                    isOpen: false
-                }
-            },
-            methods: {
-                toggleDropdown() {
-                    this.isOpen = !this.isOpen;
-                },
-                selectTheme(isDark) {
-                    this.isOpen = false;
-                    if (isDark !== themeSwitcher.isDarkTheme) {
-                        themeSwitcher.toggleTheme();
-                    }
-                }
-            },
-            mounted() {
-                // 点击外部关闭下拉菜单
-                document.addEventListener('click', (e) => {
-                    if (!this.$el.contains(e.target)) {
-                        this.isOpen = false;
-                    }
-                });
-                this.$message.config({
-                    getContainer: () => document.getElementById('message')
-                });
-                document.getElementById('message').className = themeSwitcher.currentTheme;
+    const themeSwitcher = createThemeSwitcher();
+    Vue.component('a-theme-switch', {
+        template: `{{template "component/themeSwitchTemplate"}}`,
+        data: function() {
+            return {
+                themeSwitcher: themeSwitcher
             }
-        });
+        },
+        mounted() {
+            this.$message.config({
+                getContainer: () => document.getElementById('message')
+            });
+            document.getElementById('message').className = themeSwitcher.currentTheme;
+        }
+    });
         Vue.component('a-theme-switch-login', {
     template: `{{template "component/themeSwitchTemplateLogin"}}`,
     data: () => ({

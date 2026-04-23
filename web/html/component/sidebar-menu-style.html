@@ -1,0 +1,63 @@
+<style>
+/* ========== 侧边栏菜单样式 - 参考示例图片 ========== */
+
+/* 主题切换子菜单样式 */
+.ant-menu-submenu-title {
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+}
+
+.ant-menu-submenu-title .anticon {
+    font-size: 14px !important;
+}
+
+/* 选中状态的主题切换项 */
+.ant-menu-theme-switch {
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+}
+
+/* 小圆点样式 */
+.theme-dot {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    margin-right: 4px;
+}
+
+.theme-dot.light {
+    background: #ffd700;
+    box-shadow: 0 0 4px rgba(255, 215, 0, 0.4);
+}
+
+.theme-dot.dark {
+    background: #4a5568;
+    box-shadow: 0 0 4px rgba(74, 85, 104, 0.4);
+}
+
+/* 暗色主题下的圆点 */
+.dark .theme-dot.light,
+.black .theme-dot.light {
+    background: #ffe066;
+}
+
+.dark .theme-dot.dark,
+.black .theme-dot.dark {
+    background: #7c8ba8;
+}
+
+/* 子菜单内部边距调整 */
+.ant-menu-submenu .ant-menu-sub {
+    padding: 4px 0 !important;
+}
+
+/* 子菜单项样式 */
+.ant-menu-sub .ant-menu-item {
+    padding-left: 32px !important;
+    border-radius: 0 !important;
+    margin: 0 4px !important;
+}
+</style>
